@@ -5,7 +5,7 @@ A Raspberry Pi powered rotary dial telepone which plays back a random audio from
 - Get a prerecorded response from the phone based on the input dialed.
 - You cannot dial M for Murder
 
-# 
+# Set up
 1. Clone the Repository:
 ```
 git clone https://github.com/030jmk/OldRedPhone.git
