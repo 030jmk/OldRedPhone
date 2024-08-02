@@ -30,7 +30,7 @@ def count_pulses(duration):
     end_time = time.time() + duration
     last_state = GPIO.input(pulse_input_pin)
     
-    subprocess.run(["play", "-q", "AfterTheBeep.wav", "-t", "alsa"])  # Play before capturing pulses
+    subprocess.run(["play", "-q", "AfterTheBeep.mp3", "-t", "alsa"])  # Play before capturing pulses
 
     while time.time() < end_time:
         current_state = GPIO.input(pulse_input_pin)
@@ -40,7 +40,7 @@ def count_pulses(duration):
         last_state = current_state
         time.sleep(0.01)  # Short sleep to prevent CPU overuse
 
-    subprocess.run(["play", "-q", "AfterTheBeep.wav", "-t", "alsa"])  # Play after capturing pulses
+    subprocess.run(["play", "-q", "AfterTheBeep.mp3", "-t", "alsa"])  # Play after capturing pulses
 
 def play_random_file_from_folder(folder):
     files = os.listdir(folder)
@@ -57,7 +57,7 @@ def main_loop():
             switch_hook_state = GPIO.input(switch_hook_pin)
             if switch_hook_state == GPIO.LOW and last_call_completed:  # Phone is lifted and last call was completed
                 print("Switch hook is lifted")
-                subprocess.run(["play", "-q", "dual_tone.wav", "-t", "alsa"])  # Play dual tone
+                subprocess.run(["play", "-q", "dual_tone.mp3", "-t", "alsa"])  # Play dual tone
                 count_pulses(pulse_count_duration)  # Use the variable for duration
                 print(f"Number of pulses captured: {pulse_count}")
                 
@@ -68,7 +68,7 @@ def main_loop():
                 else:
                     print(f"Folder {folder_name} does not exist")
                 
-                subprocess.run(["play", "-q", "Gassenbesetztton.wav", "-t", "alsa"])  # Play Gassenbesetztton
+                subprocess.run(["play", "-q", "Gassenbesetztton.mp3", "-t", "alsa"])  # Play Gassenbesetztton
                 last_call_completed = False
             elif switch_hook_state == GPIO.HIGH:  # Switch hook is down
                 print("Switch hook is down")
