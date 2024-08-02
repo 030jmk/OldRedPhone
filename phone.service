@@ -1,0 +1,12 @@
+[Unit]
+Description=Random audios played back by lifting up the handset and dialing a number
+After=multi-user.target
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /home/pi/OldRedPhone/phone.py
+WorkingDirectory=/home/pi/BigRedButton
+User=pi
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
