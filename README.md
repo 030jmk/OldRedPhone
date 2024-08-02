@@ -20,7 +20,7 @@ sudo apt-get install sox
 7. Connect a speaker to the 3.5mm audio output jack. (in case of a missing audio-jack, you will have to make use of an adapter or the hdmi output)
 8. Run the Script.
 ```
-python red.py
+python phone.py
 ```
 
 
