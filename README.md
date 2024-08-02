@@ -42,3 +42,7 @@ sudo systemctl enable phone.service
 sudo systemctl status phone.service
 ```
 
+# Video
+<a href="http://www.youtube.com/watch?feature=player_embedded&v=bTR6DwSzY9M
+" target="_blank"><img src="http://img.youtube.com/vi/bTR6DwSzY9M/0.jpg" 
+alt="IMAGE ALT TEXT HERE" width="240" height="180" border="10" /></a>
