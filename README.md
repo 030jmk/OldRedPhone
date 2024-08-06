@@ -27,7 +27,7 @@ python phone.py
 # Automated start and restart
 1. Copy the .service file to the systemd system directory:
 ```
-sudo cp redbutton.service /etc/systemd/system/
+sudo cp phone.service /etc/systemd/system/
 ```
 2. Reload the systemd daemon to recognize the new service file:
 ```
