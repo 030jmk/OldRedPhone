@@ -1,7 +1,7 @@
 #!/usr/bin/python3
+import subprocess
 import RPi.GPIO as GPIO
 import time
-import subprocess
 import os
 import random
 
@@ -9,73 +9,79 @@ import random
 pulse_input_pin = 3
 switch_hook_pin = 26
 
-# Duration for counting pulses (in seconds)
-pulse_count_duration = 5
-
 # Initialize variables
 pulse_count = 0
-last_call_completed = True
+last_pulse_time = 0
+dialing_timeout = 5  # 5 seconds timeout
+last_switch_hook_state = GPIO.LOW  # Assume the hook is down initially
+last_pulse_state = GPIO.LOW
 
 # GPIO setup
 def setup_gpio():
     GPIO.setwarnings(False)
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(pulse_input_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-    GPIO.setup(switch_hook_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.setup(switch_hook_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
     print("GPIO setup complete")
 
-def count_pulses(duration):
-    global pulse_count
-    pulse_count = 0
-    end_time = time.time() + duration
-    last_state = GPIO.input(pulse_input_pin)
-    
-    subprocess.run(["play", "-q", "AfterTheBeep.mp3", "-t", "alsa"])  # Play before capturing pulses
-
-    while time.time() < end_time:
-        current_state = GPIO.input(pulse_input_pin)
-        if current_state == GPIO.LOW and last_state == GPIO.HIGH:
-            pulse_count += 1
-            print(f"Pulse detected. Count: {pulse_count}")
-        last_state = current_state
-        time.sleep(0.01)  # Short sleep to prevent CPU overuse
-
-    subprocess.run(["play", "-q", "AfterTheBeep.mp3", "-t", "alsa"])  # Play after capturing pulses
-
-def play_random_file_from_folder(folder):
-    files = os.listdir(folder)
-    if files:
-        file_to_play = os.path.join(folder, random.choice(files))
-        subprocess.run(["play", "-q", file_to_play, "-t", "alsa"])
+def play_random_file(number):
+    folder_path = f"./{number}"  # Assuming folders are in the same directory as the script
+    if os.path.exists(folder_path):
+        audio_files = [f for f in os.listdir(folder_path) if f.endswith('.mp3') or f.endswith('.wav')]
+        if audio_files:
+            random_file = random.choice(audio_files)
+            file_path = os.path.join(folder_path, random_file)
+            print(f"Playing file: {file_path}")
+            subprocess.run(["play", "-q", file_path])
+        else:
+            print(f"No audio files found in folder {number}")
     else:
-        print(f"No files found in folder {folder}")
+        print(f"Folder {number} does not exist")
 
+# Main loop
 def main_loop():
-    global last_call_completed
+    global pulse_count, last_pulse_time, last_switch_hook_state, last_pulse_state
+    
     try:
         while True:
-            switch_hook_state = GPIO.input(switch_hook_pin)
-            if switch_hook_state == GPIO.LOW and last_call_completed:  # Phone is lifted and last call was completed
-                print("Switch hook is lifted")
-                subprocess.run(["play", "-q", "dual_tone.mp3", "-t", "alsa"])  # Play dual tone
-                count_pulses(pulse_count_duration)  # Use the variable for duration
-                print(f"Number of pulses captured: {pulse_count}")
-                
-                # Determine folder based on pulse count
-                folder_name = str(pulse_count) if pulse_count > 0 else "0"
-                if os.path.isdir(folder_name):
-                    play_random_file_from_folder(folder_name)
+            current_switch_hook_state = GPIO.input(switch_hook_pin)
+            current_pulse_state = GPIO.input(pulse_input_pin)
+            
+            # Check if switch hook state has changed
+            if current_switch_hook_state != last_switch_hook_state:
+                if current_switch_hook_state == GPIO.HIGH:
+                    print("Switch hook lifted")
+                    pulse_count = 0
+                    last_pulse_time = time.time()
                 else:
-                    print(f"Folder {folder_name} does not exist")
-                
-                subprocess.run(["play", "-q", "Gassenbesetztton.mp3", "-t", "alsa"])  # Play Gassenbesetztton
-                last_call_completed = False
-            elif switch_hook_state == GPIO.HIGH:  # Switch hook is down
-                print("Switch hook is down")
-                last_call_completed = True
-            else:
-                print("Waiting for switch hook to be replaced")
-            time.sleep(1)  # Check switch hook every second
+                    print("Switch hook replaced")
+                    if pulse_count > 0:
+                        print(f"\nNumber dialed: {pulse_count}")
+                        play_random_file(pulse_count if pulse_count < 10 else 0)
+                    pulse_count = 0
+                last_switch_hook_state = current_switch_hook_state
+
+            # Check for pulse (falling edge)
+            if current_pulse_state == GPIO.LOW and last_pulse_state == GPIO.HIGH:
+                current_time = time.time()
+                if current_time - last_pulse_time > 0.05:  # Debounce
+                    pulse_count += 1
+                    print(f"Pulse detected. Count: {pulse_count}")
+                    last_pulse_time = current_time
+            last_pulse_state = current_pulse_state
+
+            # If the hook is lifted, check for timeout
+            if current_switch_hook_state == GPIO.HIGH and pulse_count > 0:
+                current_time = time.time()
+                time_left = max(0, dialing_timeout - (current_time - last_pulse_time))
+                if time_left > 0:
+                    print(f"Time left: {time_left:.1f} seconds", end='\r')
+                else:
+                    print(f"\nDialing timeout reached. Number dialed: {pulse_count}")
+                    play_random_file(pulse_count if pulse_count < 10 else 0)
+                    pulse_count = 0
+
+            time.sleep(0.01)  # Short sleep to prevent CPU overuse
     except KeyboardInterrupt:
         print("\nExiting gracefully")
     finally:
