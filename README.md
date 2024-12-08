@@ -12,7 +12,7 @@ git clone https://github.com/030jmk/OldRedPhone.git
 ```
 2. Install Dependencies:
 ```
-sudo apt-get install sox
+sudo apt-get install sox libsox-fmt-mp3
 ```
 4. Add or replace audio files: Place .wav and .mp3 files in the audio folders ranging from 1 to 10.
 5. Connect a Button: Use GPIO pin 26 on the Raspberry Pi.
